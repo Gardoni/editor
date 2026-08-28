@@ -1,5 +1,21 @@
 <!DOCTYPE html>
-<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title> EDITOR DE ATIVIDADE </title><style>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title> EDITOR DE ATIVIDADE - FIREBASE </title>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, getDocs, collection, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyCLaqaOCJnkfG4LID1Y5RoFpgEsX9nYGOM",
+  authDomain: "testeapi-1ad07.firebaseapp.com",
+  projectId: "testeapi-1ad07",
+  storageBucket: "testeapi-1ad07.firebasestorage.app",
+  messagingSenderId: "323295128076",
+  appId: "1:323295128076:web:3af167424f75b680f19c29"
+};
+const app = initializeApp(firebaseConfig);
+window.db = getFirestore(app);
+window.fb = { doc, setDoc, getDoc, getDocs, collection, deleteDoc, query, where };
+</script>
+<style>
 :root{--bg:#0f172a;--card:#1e293b;--input:#1e293b;--text:#e2e8f0;--border:#334155;--azul:#3b82f6}
 body.claro{--bg:#dbeafe;--card:#ffffff;--input:#eff6ff;--text:#1e3a8a;--border:#93c5fd;--azul:#2563eb}
 body{font-family:system-ui;background:var(--bg);color:var(--text);text-align:center;padding:10px;margin:0}
@@ -25,234 +41,110 @@ h2{color:var(--azul)}
 .item-prof{display:flex;justify-content:space-between;align-items:center;background:var(--input);padding:10px;border-radius:10px;margin:6px 0;border:1px solid var(--border)}
 .aluno-card{background:linear-gradient(135deg,var(--card),var(--input));border:2px solid var(--azul);padding:18px;border-radius:16px;margin-bottom:16px}
 .resposta-item{background:var(--input);border:1.5px solid var(--border);padding:12px;border-radius:12px;margin:10px 0}
-.opcao-aluno{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:10px;margin:8px 0;background:#fff;cursor:pointer}
-.opcao-aluno:hover{background:#eff6ff;border-color:#3b82f6}
-.opcao-aluno input[type="radio"]{width:20px;height:20px;flex-shrink:0;accent-color:#2563eb;margin:0}
-.opcao-aluno label{flex:1;cursor:pointer;color:#000;font-size:13px;font-weight:500}
-.opcao-aluno.selecionada{border-color:#2563eb;background:#dbeafe;box-shadow:0 0 0 2px rgba(37,99,235,0.2)}
+/* BOLINHA NA ESQUERDA AJUSTADA */
+.opcao-aluno{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1.5px solid #cbd5e1;border-radius:10px;margin:8px 0;background:#fff;cursor:pointer;transition:0.2s}
+.opcao-aluno:hover{background:#eff6ff;border-color:#3b82f6;transform:scale(1.01)}
+.opcao-aluno input[type="radio"]{width:22px;height:22px;flex-shrink:0;accent-color:#2563eb;margin:0;order:1}
+.opcao-aluno label{flex:1;cursor:pointer;color:#000;font-size:13px;font-weight:500;order:2}
+.opcao-aluno.selecionada{border-color:#2563eb;background:#dbeafe;box-shadow:0 0 0 2px rgba(37,99,235,0.3)}
 .config-prova{background:var(--input);border:2px solid #f59e0b;border-radius:14px;padding:14px;margin:10px 0}
 </style></head><body>
-<div id="telaLogin"><div class="login-card"><h1>📝 EDITOR DE ATIVIDADE</h1><p>E.E. PROFESSOR ALISSON</p><input id="loginUser" class="input-padrao" style="background:#eff6ff;color:#1e3a8a" placeholder="USUÁRIO"><input id="loginPass" type="password" class="input-padrao" style="background:#eff6ff;color:#1e3a8a" placeholder="SENHA"><button class="btn-blue" style="width:100%;padding:14px;margin-top:10px" onclick="fazerLogin()">ENTRAR</button><div style="margin-top:12px;font-size:11px;background:#eff6ff;padding:8px;border-radius:10px;color:#1e3a8a;text-align:left"><b>👑 Master:</b> master / 1234<br><b>👨‍🏫 Professor:</b> criado pelo master<br><b>🎓 Aluno:</b> aluno / aluno</div><div id="loginErro" style="color:#ef4444;font-size:12px;margin-top:8px;display:none"></div></div></div>
-<button class="btn-tema" id="btnTema" onclick="toggleTema()">☀️ MODO CLARO</button><h2>📝 EDITOR DE ATIVIDADE<br><span style="font-size:14px;opacity:0.8">E.E. PROFESSOR ALISSON PEREIRA GUIMARÃES</span></h2>
-
+<div id="telaLogin"><div class="login-card"><h1>📝 EDITOR DE ATIVIDADE</h1><p>E.E. PROFESSOR ALISSON</p><input id="loginUser" class="input-padrao" style="background:#eff6ff;color:#1e3a8a" placeholder="USUÁRIO"><input id="loginPass" type="password" class="input-padrao" style="background:#eff6ff;color:#1e3a8a" placeholder="SENHA"><button class="btn-blue" style="width:100%;padding:14px;margin-top:10px" onclick="fazerLogin()">ENTRAR</button><div style="margin-top:12px;font-size:11px;background:#eff6ff;padding:8px;border-radius:10px;color:#1e3a8a;text-align:left"><b>👑 Master:</b> master / 1234<br><b>👨‍🏫 Professor:</b> criado pelo master<br><b>🎓 Aluno:</b> aluno / aluno</div><div id="loginErro" style="color:#ef4444;font-size:12px;margin-top:8px;display:none"></div><div id="statusFirebase" style="font-size:10px;color:#888;margin-top:6px">Firebase: conectando...</div></div></div>
+<button class="btn-tema" id="btnTema" onclick="toggleTema()">☀️ MODO CLARO</button><h2>📝 EDITOR DE ATIVIDADE<br><span style="font-size:14px;opacity:0.8">E.E. PROFESSOR ALISSON PEREIRA GUIMARÃES - FIREBASE</span></h2>
 <div class="card" id="appPrincipal" style="display:none">
 <div class="top-bar"><div class="user-info" id="infoUsuario"></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn-sec" onclick="abrirMeuPerfil()">👤 PERFIL</button><button class="btn-edit-prova" id="btnGerenciar" onclick="abrirGerenciarProf()" style="display:none">⚙️ PROFESSORES</button><button class="btn-red" onclick="sair()">🚪 SAIR</button></div></div>
 <div id="avisoEditando" class="aviso-editando">✏️ EDITANDO</div>
-<div id="boxCabecalho" class="config-header"><div style="text-align:center"><img id="img_logo" class="logo-preview" src="img_logo.jpg"><input type="file" id="inputLogo" accept="image/*" style="display:none" onchange="trocarLogo(this)"><button class="btn-logo" onclick="document.getElementById('inputLogo').click()">📁 TROCAR LOGO</button></div><div><input id="nomeEscola" class="input-padrao" value="E.E. PROFESSOR ALISSON PEREIRA GUIMARÃES"><input id="tituloAvaliacao" class="input-padrao" value="ATIVIDADE DE MATEMÁTICA"><input id="nomeProfessor" class="input-padrao" placeholder="NOME DO PROFESSOR"><div style="display:grid;grid-template-columns:2fr 1fr;gap:8px"><input id="prov-titulo" class="input-padrao" placeholder="Assunto"><input id="prov-codigo" class="input-padrao" placeholder="CÓDIGO Ex: MAT7A01"></div></div></div>
-
-<div class="config-prova">
-<h4 style="margin:0 0 8px 0;color:#d97706">⏰ CONFIGURAÇÕES DA PROVA ONLINE</h4>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-<div><label style="font-size:11px;font-weight:800">INÍCIO (data e hora)</label><input id="prov-inicio" type="datetime-local" class="input-padrao"></div>
-<div><label style="font-size:11px;font-weight:800">TÉRMINO (data e hora)</label><input id="prov-fim" type="datetime-local" class="input-padrao"></div>
-</div>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-<div><label style="font-size:11px;font-weight:800">QUANTAS VEZES PODE ENVIAR?</label>
-<select id="prov-tentativas" class="input-padrao"><option value="0">0 - Sem limite</option><option value="1">1 vez</option><option value="2">2 vezes</option><option value="3">3 vezes</option></select></div>
-<div><label style="font-size:11px;font-weight:800">SE SAIR DA TELA DA PROVA?</label>
-<select id="prov-saida" class="input-padrao"><option value="aviso">1 - Só aviso</option><option value="enviar_fechar">2 - Envia o que fez e fecha</option></select></div>
-</div>
-<div style="font-size:10px;opacity:0.7;margin-top:6px">Deixe início/fim vazio se for prova sem horário. Tentativas conta dentro do prazo.</div>
-</div>
-
-<div id="editorQuestoes"></div><button class="btn-blue" style="width:100%;padding:14px" onclick="addQuestao()">+ ADICIONAR QUESTÃO</button><div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btn-sec" onclick="novaProva()">+ NOVA</button><button class="btn-print" onclick="imprimirRascunho(false)">🖨️ 1 COL</button><button class="btn-2col" onclick="imprimirRascunho(true)">🖨️ 2 COL</button><button class="btn-go" id="btnFinalizar" onclick="finalizarSalvarPC()">💾 SALVAR</button></div><div id="listaProvas" style="margin-top:18px"></div></div>
-
+<div id="boxCabecalho" class="config-header"><div style="text-align:center"><img id="img_logo" class="logo-preview" src="https://via.placeholder.com/100"><input type="file" id="inputLogo" accept="image/*" style="display:none" onchange="trocarLogo(this)"><button class="btn-logo" onclick="document.getElementById('inputLogo').click()">📁 TROCAR LOGO</button></div><div><input id="nomeEscola" class="input-padrao" value="E.E. PROFESSOR ALISSON PEREIRA GUIMARÃES"><input id="tituloAvaliacao" class="input-padrao" value="ATIVIDADE DE MATEMÁTICA"><input id="nomeProfessor" class="input-padrao" placeholder="NOME DO PROFESSOR"><div style="display:grid;grid-template-columns:2fr 1fr;gap:8px"><input id="prov-titulo" class="input-padrao" placeholder="Assunto"><input id="prov-codigo" class="input-padrao" placeholder="CÓDIGO Ex: MAT7A01"></div></div></div>
+<div class="config-prova"><h4 style="margin:0 0 8px 0;color:#d97706">⏰ CONFIGURAÇÕES DA PROVA ONLINE - FIREBASE</h4><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label style="font-size:11px;font-weight:800">INÍCIO (data e hora)</label><input id="prov-inicio" type="datetime-local" class="input-padrao"></div><div><label style="font-size:11px;font-weight:800">TÉRMINO (data e hora)</label><input id="prov-fim" type="datetime-local" class="input-padrao"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><div><label style="font-size:11px;font-weight:800">QUANTAS VEZES PODE ENVIAR?</label><select id="prov-tentativas" class="input-padrao"><option value="0">0 - Sem limite</option><option value="1">1 vez</option><option value="2">2 vezes</option><option value="3">3 vezes</option></select></div><div><label style="font-size:11px;font-weight:800">SE SAIR DA TELA DA PROVA?</label><select id="prov-saida" class="input-padrao"><option value="aviso">1 - Só aviso</option><option value="enviar_fechar">2 - Envia o que fez e fecha</option></select></div></div></div>
+<div id="editorQuestoes"></div><button class="btn-blue" style="width:100%;padding:14px" onclick="addQuestao()">+ ADICIONAR QUESTÃO</button><div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button class="btn-sec" onclick="novaProva()">+ NOVA</button><button class="btn-print" onclick="imprimirRascunho(false)">🖨️ 1 COL</button><button class="btn-2col" onclick="imprimirRascunho(true)">🖨️ 2 COL</button><button class="btn-go" id="btnFinalizar" onclick="finalizarSalvarPC()">💾 SALVAR NA NUVEM</button></div><div id="listaProvas" style="margin-top:18px"></div></div>
 <div class="card" id="appAluno" style="display:none">
 <div class="top-bar"><div class="user-info" id="infoAluno">🎓 ÁREA DO ALUNO</div><div style="display:flex;gap:6px"><button class="btn-sec" onclick="abrirMeuPerfil()">👤 PERFIL</button><button class="btn-red" onclick="sair()">🚪 SAIR</button></div></div>
 <div class="aluno-card"><h3 style="margin:0 0 10px 0;color:var(--azul)">📋 MEU CADASTRO</h3><input id="alunoNome" class="input-padrao" placeholder="Nome completo"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="alunoSala" class="input-padrao" placeholder="Sala - Ex: 7º A"><input id="alunoAno" class="input-padrao" placeholder="Ano - Ex: 2025"></div><button class="btn-go" style="width:100%;margin-top:8px" onclick="salvarCadastroAluno()">💾 SALVAR CADASTRO</button><div id="alunoCadastroOk" style="display:none;margin-top:8px;background:#dcfce7;color:#166534;padding:8px;border-radius:10px;font-size:12px;font-weight:800;text-align:center">✅ Cadastro salvo!</div></div>
-<div class="aluno-card"><h3 style="margin:0 0 10px 0;color:var(--azul)">🔑 ACESSAR ATIVIDADE PELO CÓDIGO</h3><div style="display:flex;gap:8px"><input id="codigoAtividadeAluno" class="input-padrao" placeholder="Código - Ex: MAT7A01" style="flex:1"><button class="btn-blue" onclick="buscarAtividadeAluno()">🔍 BUSCAR</button></div><div id="alunoMsg" style="font-size:12px;margin-top:8px"></div><div id="alunoTentativasInfo" style="font-size:11px;margin-top:6px;opacity:0.8"></div></div>
+<div class="aluno-card"><h3 style="margin:0 0 10px 0;color:var(--azul)">🔑 ACESSAR ATIVIDADE PELO CÓDIGO</h3><div style="display:flex;gap:8px"><input id="codigoAtividadeAluno" class="input-padrao" placeholder="Código - Ex: MAT7A01" style="flex:1"><button class="btn-blue" onclick="buscarAtividadeAluno()">🔍 BUSCAR NA NUVEM</button></div><div id="alunoMsg" style="font-size:12px;margin-top:8px"></div><div id="alunoTentativasInfo" style="font-size:11px;margin-top:6px;opacity:0.8"></div></div>
 <div id="areaAtividadeAluno"></div></div>
-
 <div id="modalProf" class="modal-fundo"><div class="modal-box"><h3 style="color:var(--azul)">⚙️ PROFESSORES</h3><div style="background:var(--input);padding:12px;border-radius:12px;border:1px solid var(--border)"><input id="novoProfNome" class="input-padrao" placeholder="Nome completo"><input id="novoProfUser" class="input-padrao" placeholder="Usuário"><input id="novoProfPass" class="input-padrao" placeholder="Senha"><button class="btn-go" style="width:100%" onclick="criarProfessor()">➕ CRIAR PROFESSOR</button></div><div class="lista-prof" id="listaProfessores"></div><button class="btn-sec" style="width:100%;margin-top:10px" onclick="fecharGerenciarProf()">FECHAR</button></div></div>
 <div id="modalPerfil" class="modal-fundo"><div class="modal-box"><h3 style="color:var(--azul)">👤 MEU PERFIL</h3><div id="perfilInfo"></div><input id="perfilUser" class="input-padrao" placeholder="Novo usuário"><input id="perfilPass" type="password" class="input-padrao" placeholder="Nova senha"><input id="perfilPass2" type="password" class="input-padrao" placeholder="Confirmar"><button class="btn-blue" style="width:100%" onclick="salvarMeuPerfil()">💾 SALVAR</button><button class="btn-sec" style="width:100%;margin-top:8px" onclick="fecharMeuPerfil()">FECHAR</button></div></div>
 <div id="modalEditarProf" class="modal-fundo"><div class="modal-box"><h3 style="color:var(--azul)">✏️ EDITAR PROFESSOR</h3><input type="hidden" id="editProfId"><input id="editProfNome" class="input-padrao"><input id="editProfUser" class="input-padrao"><input id="editProfPass" class="input-padrao" placeholder="Nova senha"><button class="btn-go" style="width:100%" onclick="salvarEdicaoProf()">💾 SALVAR</button><button class="btn-sec" style="width:100%;margin-top:8px" onclick="document.getElementById('modalEditarProf').style.display='none'">CANCELAR</button></div></div>
-<div id="modalRespostas" class="modal-fundo"><div class="modal-box" style="max-width:800px"><h3 style="color:var(--azul)" id="tituloRespostas">📊 RESPOSTAS</h3><div id="listaRespostas"></div><button class="btn-sec" style="width:100%;margin-top:12px" onclick="document.getElementById('modalRespostas').style.display='none'">FECHAR</button></div></div>
-
+<div id="modalRespostas" class="modal-fundo"><div class="modal-box" style="max-width:800px"><h3 style="color:var(--azul)" id="tituloRespostas">📊 RESPOSTAS - FIREBASE</h3><div id="listaRespostas"></div><button class="btn-sec" style="width:100%;margin-top:12px" onclick="document.getElementById('modalRespostas').style.display='none'">FECHAR</button></div></div>
 <script>
 let temaSalvo=localStorage.getItem('tema_ee')||'claro';if(temaSalvo=='claro'){document.body.classList.add('claro');document.getElementById('btnTema').innerText='☀️ MODO CLARO';}else{document.getElementById('btnTema').innerText='🌙 MODO ESCURO';}
 function toggleTema(){if(document.body.classList.contains('claro')){document.body.classList.remove('claro');localStorage.setItem('tema_ee','escuro');document.getElementById('btnTema').innerText='🌙 MODO ESCURO';}else{document.body.classList.add('claro');localStorage.setItem('tema_ee','claro');document.getElementById('btnTema').innerText='☀️ MODO CLARO';}}
 let usuarios=JSON.parse(localStorage.getItem('editor_usuarios')||'[]');
-if(usuarios.length==0){usuarios=[{id:'master_1',nome:'Master Administrador',usuario:'master',senha:'1234',tipo:'master'},{id:'aluno_1',nome:'Aluno Padrão',usuario:'aluno',senha:'aluno',tipo:'aluno'}];localStorage.setItem('editor_usuarios',JSON.stringify(usuarios));}else if(!usuarios.some(u=>u.tipo=='aluno')){usuarios.push({id:'aluno_1',nome:'Aluno Padrão',usuario:'aluno',senha:'aluno',tipo:'aluno'});localStorage.setItem('editor_usuarios',JSON.stringify(usuarios));}
+if(usuarios.length==0){usuarios=[{id:'master_1',nome:'Master Administrador',usuario:'master',senha:'1234',tipo:'master'},{id:'aluno_1',nome:'Aluno Padrão',usuario:'aluno',senha:'aluno',tipo:'aluno'}];localStorage.setItem('editor_usuarios',JSON.stringify(usuarios));}
 let sessao=JSON.parse(localStorage.getItem('editor_sessao')||'null');
-function verificarSessao(){sessao=JSON.parse(localStorage.getItem('editor_sessao')||'null');if(!sessao){document.getElementById('telaLogin').style.display='flex';document.getElementById('appPrincipal').style.display='none';document.getElementById('appAluno').style.display='none';return;}document.getElementById('telaLogin').style.display='none';if(sessao.tipo=='aluno'){document.getElementById('appPrincipal').style.display='none';document.getElementById('appAluno').style.display='block';document.getElementById('infoAluno').innerHTML=`🎓 ${sessao.nome} | @${sessao.usuario}`;carregarCadastroAluno();}else{document.getElementById('appPrincipal').style.display='block';document.getElementById('appAluno').style.display='none';document.getElementById('infoUsuario').innerHTML=`👤 ${sessao.nome} | ${sessao.tipo=='master'?'👑 MASTER':'👨‍🏫 PROFESSOR'} | @${sessao.usuario}`;if(sessao.tipo=='master'){document.getElementById('btnGerenciar').style.display='inline-block';}else{document.getElementById('btnGerenciar').style.display='none';}document.getElementById('nomeProfessor').value=sessao.nome;carregarTudo();}}
-function fazerLogin(){let u=document.getElementById('loginUser').value.trim();let s=document.getElementById('loginPass').value.trim();let erro=document.getElementById('loginErro');usuarios=JSON.parse(localStorage.getItem('editor_usuarios')||'[]');let achou=usuarios.find(x=>x.usuario==u && x.senha==s);if(achou){localStorage.setItem('editor_sessao',JSON.stringify(achou));erro.style.display='none';verificarSessao();}else{erro.innerText='❌ Usuário ou senha incorretos!';erro.style.display='block';}}
+async function verificarSessao(){sessao=JSON.parse(localStorage.getItem('editor_sessao')||'null');if(!sessao){document.getElementById('telaLogin').style.display='flex';document.getElementById('appPrincipal').style.display='none';document.getElementById('appAluno').style.display='none';return;}document.getElementById('telaLogin').style.display='none';if(sessao.tipo=='aluno'){document.getElementById('appPrincipal').style.display='none';document.getElementById('appAluno').style.display='block';document.getElementById('infoAluno').innerHTML=`🎓 ${sessao.nome} | @${sessao.usuario}`;carregarCadastroAluno();}else{document.getElementById('appPrincipal').style.display='block';document.getElementById('appAluno').style.display='none';document.getElementById('infoUsuario').innerHTML=`👤 ${sessao.nome} | ${sessao.tipo=='master'?'👑 MASTER':'👨‍🏫 PROFESSOR'} | @${sessao.usuario}`;if(sessao.tipo=='master'){document.getElementById('btnGerenciar').style.display='inline-block';}else{document.getElementById('btnGerenciar').style.display='none';}document.getElementById('nomeProfessor').value=sessao.nome;await carregarTudoFirebase();}}
+async function fazerLogin(){let u=document.getElementById('loginUser').value.trim();let s=document.getElementById('loginPass').value.trim();let erro=document.getElementById('loginErro');try{let q=fb.query(fb.collection(db,'professores'), fb.where('usuario','==',u), fb.where('senha','==',s));let snap=await fb.getDocs(q);if(!snap.empty){let d=null;snap.forEach(doc=>d={...doc.data(),_id:doc.id});localStorage.setItem('editor_sessao',JSON.stringify({id:d.id||d._id,nome:d.usuario,usuario:d.usuario,senha:d.senha,tipo:d.isAdmin?'master':'professor'}));erro.style.display='none';verificarSessao();return;}}catch(e){}usuarios=JSON.parse(localStorage.getItem('editor_usuarios')||'[]');let achou=usuarios.find(x=>x.usuario==u && x.senha==s);if(achou){localStorage.setItem('editor_sessao',JSON.stringify(achou));erro.style.display='none';verificarSessao();}else{erro.innerText='❌ Usuário ou senha incorretos!';erro.style.display='block';}}
 function sair(){desativarMonitorSaida();localStorage.removeItem('editor_sessao');verificarSessao();}
 function abrirMeuPerfil(){sessao=JSON.parse(localStorage.getItem('editor_sessao')||'null');document.getElementById('perfilInfo').innerHTML=`<div style="font-size:12px;margin-bottom:10px;background:var(--input);padding:10px;border-radius:10px">Logado como:<br><b>${sessao.nome}</b><br>Tipo: ${sessao.tipo}<br>Usuário: @${sessao.usuario}</div>`;document.getElementById('perfilUser').value=sessao.usuario;document.getElementById('modalPerfil').style.display='flex';}
 function fecharMeuPerfil(){document.getElementById('modalPerfil').style.display='none';}
-function salvarMeuPerfil(){let novoUser=document.getElementById('perfilUser').value.trim();let novaPass=document.getElementById('perfilPass').value.trim();let novaPass2=document.getElementById('perfilPass2').value.trim();if(!novoUser){alert('Digite usuário');return;}if(novaPass && novaPass!=novaPass2){alert('Senhas não conferem');return;}usuarios=JSON.parse(localStorage.getItem('editor_usuarios')||'[]');let idx=usuarios.findIndex(x=>x.id==sessao.id);if(usuarios.some(x=>x.usuario==novoUser && x.id!=sessao.id)){alert('Usuário já existe');return;}usuarios[idx].usuario=novoUser;if(novaPass)usuarios[idx].senha=novaPass;localStorage.setItem('editor_usuarios',JSON.stringify(usuarios));localStorage.setItem('editor_sessao',JSON.stringify(usuarios[idx]));alert('✅ Perfil atualizado!');fecharMeuPerfil();verificarSessao();}
-function abrirGerenciarProf(){sessao=JSON.parse(localStorage.getItem('editor_sessao')||'null');if(sessao.tipo!='master'){alert('Só MASTER');return;}carregarListaProf();document.getElementById('modalProf').style.display='flex';}
+function salvarMeuPerfil(){let novoUser=document.getElementById('perfilUser').value.trim();let novaPass=document.getElementById('perfilPass').value.trim();let novaPass2=document.getElementById('perfilPass2').value.trim();if(!novoUser){alert('Digite usuário');return;}if(novaPass && novaPass!=novaPass2){alert('Senhas não conferem');return;}usuarios=JSON.parse(localStorage.getItem('editor_usuarios')||'[]');let idx=usuarios.findIndex(x=>x.id==sessao.id);if(idx>=0){usuarios[idx].usuario=novoUser;if(novaPass)usuarios[idx].senha=novaPass;localStorage.setItem('editor_usuarios',JSON.stringify(usuarios));localStorage.setItem('editor_sessao',JSON.stringify(usuarios[idx]));}alert('✅ Perfil atualizado!');fecharMeuPerfil();verificarSessao();}
+function abrirGerenciarProf(){sessao=JSON.parse(localStorage.getItem('editor_sessao')||'null');if(sessao.tipo!='master'){alert('Só MASTER');return;}carregarListaProfFirebase();document.getElementById('modalProf').style.display='flex';}
 function fecharGerenciarProf(){document.getElementById('modalProf').style.display='none';}
-function carregarListaProf(){usuarios=JSON.parse(localStorage.getItem('editor_usuarios')||'[]');let profs=usuarios.filter(x=>x.tipo=='professor');document.getElementById('listaProfessores').innerHTML=profs.map(p=>`<div class="item-prof"><div><b>${p.nome}</b><br><span style="font-size:11px">@${p.usuario} | ${p.senha}</span></div><div style="display:flex;gap:4px"><button class="btn-edit-prova" onclick="abrirEditarProf('${p.id}')">✏️</button><button class="btn-red" onclick="excluirProf('${p.id}')">🗑️</button></div></div>`).join('')||'<div style="font-size:12px;text-align:center;opacity:0.6">Nenhum professor</div>';}
-function criarProfessor(){let nome=document.getElementById('novoProfNome').value.trim();let user=document.getElementById('novoProfUser').value.trim();let pass=document.getElementById('novoProfPass').value.trim();if(!nome||!user||!pass){alert('Preencha tudo');return;}usuarios=JSON.parse(localStorage.getItem('editor_usuarios')||'[]');if(usuarios.some(x=>x.usuario==user)){alert('Usuário já existe');return;}usuarios.push({id:'prof_'+Date.now(),nome,usuario:user,senha:pass,tipo:'professor'});localStorage.setItem('editor_usuarios',JSON.stringify(usuarios));document.getElementById('novoProfNome').value='';document.getElementById('novoProfUser').value='';document.getElementById('novoProfPass').value='';carregarListaProf();alert('✅ Professor criado!');}
-function excluirProf(id){if(!confirm('Excluir professor?'))return;usuarios=JSON.parse(localStorage.getItem('editor_usuarios')||'[]');usuarios=usuarios.filter(x=>x.id!=id);localStorage.setItem('editor_usuarios',JSON.stringify(usuarios));let provasTodas=JSON.parse(localStorage.getItem('provas_pc_final')||'[]');provasTodas=provasTodas.filter(p=>p.ownerId!=id);localStorage.setItem('provas_pc_final',JSON.stringify(provasTodas));carregarListaProf();carregarTudo();}
-function abrirEditarProf(id){usuarios=JSON.parse(localStorage.getItem('editor_usuarios')||'[]');let p=usuarios.find(x=>x.id==id);document.getElementById('editProfId').value=p.id;document.getElementById('editProfNome').value=p.nome;document.getElementById('editProfUser').value=p.usuario;document.getElementById('editProfPass').value='';document.getElementById('modalEditarProf').style.display='flex';}
-function salvarEdicaoProf(){let id=document.getElementById('editProfId').value;let nome=document.getElementById('editProfNome').value.trim();let user=document.getElementById('editProfUser').value.trim();let pass=document.getElementById('editProfPass').value.trim();usuarios=JSON.parse(localStorage.getItem('editor_usuarios')||'[]');let idx=usuarios.findIndex(x=>x.id==id);if(usuarios.some(x=>x.usuario==user && x.id!=id)){alert('Usuário já existe');return;}usuarios[idx].nome=nome;usuarios[idx].usuario=user;if(pass)usuarios[idx].senha=pass;localStorage.setItem('editor_usuarios',JSON.stringify(usuarios));document.getElementById('modalEditarProf').style.display='none';carregarListaProf();alert('✅ Atualizado!');}
+async function carregarListaProfFirebase(){try{let snap=await fb.getDocs(fb.collection(db,'professores'));let html='';snap.forEach(d=>{let p=d.data();if(p.id=='gardoni')return;html+=`<div class="item-prof"><div><b>${p.usuario}</b><br><span style="font-size:11px">${p.id}</span></div><div><button class="btn-red" onclick="excluirProfFirebase('${d.id}')">🗑️</button></div></div>`;});document.getElementById('listaProfessores').innerHTML=html||'Nenhum professor no Firebase';}catch(e){carregarListaProf();}}
+function carregarListaProf(){usuarios=JSON.parse(localStorage.getItem('editor_usuarios')||'[]');let profs=usuarios.filter(x=>x.tipo=='professor');document.getElementById('listaProfessores').innerHTML=profs.map(p=>`<div class="item-prof"><div><b>${p.nome}</b><br><span style="font-size:11px">@${p.usuario}</span></div><div><button class="btn-red" onclick="excluirProf('${p.id}')">🗑️</button></div></div>`).join('')||'Nenhum professor';}
+async function criarProfessor(){let nome=document.getElementById('novoProfNome').value.trim();let user=document.getElementById('novoProfUser').value.trim();let pass=document.getElementById('novoProfPass').value.trim();if(!nome||!user||!pass){alert('Preencha tudo');return;}try{await fb.setDoc(fb.doc(db,'professores',user.toLowerCase()),{id:user.toLowerCase(),usuario:user,senha:pass,nome:nome,isAdmin:false,bloqueado:false,timestamp:Date.now()});alert('✅ Professor criado no Firebase!');carregarListaProfFirebase();}catch(e){usuarios=JSON.parse(localStorage.getItem('editor_usuarios')||'[]');usuarios.push({id:'prof_'+Date.now(),nome,usuario:user,senha:pass,tipo:'professor'});localStorage.setItem('editor_usuarios',JSON.stringify(usuarios));carregarListaProf();alert('✅ Professor criado local!');}document.getElementById('novoProfNome').value='';document.getElementById('novoProfUser').value='';document.getElementById('novoProfPass').value='';}
+async function excluirProfFirebase(id){if(!confirm('Excluir professor?'))return;await fb.deleteDoc(fb.doc(db,'professores',id));carregarListaProfFirebase();}
+function excluirProf(id){if(!confirm('Excluir?'))return;usuarios=JSON.parse(localStorage.getItem('editor_usuarios')||'[]');usuarios=usuarios.filter(x=>x.id!=id);localStorage.setItem('editor_usuarios',JSON.stringify(usuarios));carregarListaProf();}
+function abrirEditarProf(id){alert('No Firebase edite direto no console');}
+function salvarEdicaoProf(){}
 function carregarCadastroAluno(){let cadastro=JSON.parse(localStorage.getItem('aluno_cadastro_'+sessao.id)||'null');if(cadastro){document.getElementById('alunoNome').value=cadastro.nome||'';document.getElementById('alunoSala').value=cadastro.sala||'';document.getElementById('alunoAno').value=cadastro.ano||'';}}
-function salvarCadastroAluno(){let nome=document.getElementById('alunoNome').value.trim();let sala=document.getElementById('alunoSala').value.trim();let ano=document.getElementById('alunoAno').value.trim();if(!nome||!sala||!ano){alert('Preencha nome, sala e ano');return;}let cadastro={nome,sala,ano};localStorage.setItem('aluno_cadastro_'+sessao.id,JSON.stringify(cadastro));document.getElementById('alunoCadastroOk').style.display='block';setTimeout(()=>{document.getElementById('alunoCadastroOk').style.display='none';},2000);usuarios=JSON.parse(localStorage.getItem('editor_usuarios')||'[]');let idx=usuarios.findIndex(x=>x.id==sessao.id);if(idx>=0){usuarios[idx].nome=nome;localStorage.setItem('editor_usuarios',JSON.stringify(usuarios));localStorage.setItem('editor_sessao',JSON.stringify(usuarios[idx]));}}
-
-let atividadeAtualAluno=null;
-let monitorSaidaAtivo=false;
-let provaBloqueada=false;
-
-function desativarMonitorSaida(){
-monitorSaidaAtivo=false;
-window.onbeforeunload=null;
-document.removeEventListener('visibilitychange', handleVisibilityChange);
-}
-
-function handleVisibilityChange(){
-if(!monitorSaidaAtivo || provaBloqueada) return;
-if(document.hidden){
-if(atividadeAtualAluno && atividadeAtualAluno.acaoSaida=='enviar_fechar'){
-alert('⚠️ Você saiu da prova! Sua prova será enviada automaticamente com o que você fez até agora e será fechada.');
-enviarRespostasAluno(true);
-}else if(atividadeAtualAluno && atividadeAtualAluno.acaoSaida=='aviso'){
-alert('⚠️ AVISO: Você saiu da tela da prova! Volte rapidamente ou sua prova pode ser finalizada. O professor foi avisado.');
-}
-}
-}
-
-function ativarMonitorSaida(acao){
-desativarMonitorSaida();
-monitorSaidaAtivo=true;
-if(acao=='aviso'){
-window.onbeforeunload=function(){return 'Você tem certeza que quer sair da prova? Seu progresso pode ser perdido!';};
-document.addEventListener('visibilitychange', handleVisibilityChange);
-}else if(acao=='enviar_fechar'){
-window.onbeforeunload=function(e){
-if(!provaBloqueada){
-enviarRespostasAluno(true);
-}
-};
-document.addEventListener('visibilitychange', handleVisibilityChange);
-}
-}
-
-function buscarAtividadeAluno(){
-let codigo=document.getElementById('codigoAtividadeAluno').value.trim();
-let msg=document.getElementById('alunoMsg');let area=document.getElementById('areaAtividadeAluno');let infoTent=document.getElementById('alunoTentativasInfo');
+function salvarCadastroAluno(){let nome=document.getElementById('alunoNome').value.trim();let sala=document.getElementById('alunoSala').value.trim();let ano=document.getElementById('alunoAno').value.trim();if(!nome||!sala||!ano){alert('Preencha nome, sala e ano');return;}let cadastro={nome,sala,ano};localStorage.setItem('aluno_cadastro_'+sessao.id,JSON.stringify(cadastro));document.getElementById('alunoCadastroOk').style.display='block';setTimeout(()=>{document.getElementById('alunoCadastroOk').style.display='none';},2000);}
+let atividadeAtualAluno=null;let monitorSaidaAtivo=false;let provaBloqueada=false;
+function desativarMonitorSaida(){monitorSaidaAtivo=false;window.onbeforeunload=null;document.removeEventListener('visibilitychange', handleVisibilityChange);}
+function handleVisibilityChange(){if(!monitorSaidaAtivo || provaBloqueada) return;if(document.hidden){if(atividadeAtualAluno && atividadeAtualAluno.acaoSaida=='enviar_fechar'){alert('⚠️ Você saiu da prova! Enviando automaticamente...');enviarRespostasAluno(true);}else if(atividadeAtualAluno && atividadeAtualAluno.acaoSaida=='aviso'){alert('⚠️ AVISO: Você saiu da tela da prova!');}}}
+function ativarMonitorSaida(acao){desativarMonitorSaida();monitorSaidaAtivo=true;if(acao=='aviso'){window.onbeforeunload=function(){return 'Sair da prova?';};document.addEventListener('visibilitychange', handleVisibilityChange);}else if(acao=='enviar_fechar'){window.onbeforeunload=function(e){if(!provaBloqueada){enviarRespostasAluno(true);}};document.addEventListener('visibilitychange', handleVisibilityChange);}}
+async function buscarAtividadeAluno(){
+let codigo=document.getElementById('codigoAtividadeAluno').value.trim();let msg=document.getElementById('alunoMsg');let area=document.getElementById('areaAtividadeAluno');let infoTent=document.getElementById('alunoTentativasInfo');
 if(!codigo){msg.innerHTML='<span style="color:#ef4444">Digite o código</span>';return;}
-let cadastro=JSON.parse(localStorage.getItem('aluno_cadastro_'+sessao.id)||'null');
-if(!cadastro||!cadastro.nome){msg.innerHTML='<span style="color:#ef4444">⚠️ Salve seu cadastro primeiro</span>';return;}
-let todas=JSON.parse(localStorage.getItem('provas_pc_final')||'[]');
-let p=todas.find(x=>x.senha && x.senha.toLowerCase()==codigo.toLowerCase());
-if(!p){msg.innerHTML='<span style="color:#ef4444">❌ Código não encontrado</span>';area.innerHTML='';infoTent.innerHTML='';return;}
-
-// Verifica data/hora
-let agora=new Date();
-let inicio = p.inicio? new Date(p.inicio) : null;
-let fim = p.fim? new Date(p.fim) : null;
-if(inicio && agora < inicio){
-msg.innerHTML=`<span style="color:#f59e0b">⏰ Esta prova ainda não começou!<br>Início: ${new Date(p.inicio).toLocaleString('pt-BR')}</span>`;
-area.innerHTML='';infoTent.innerHTML='';return;
-}
-if(fim && agora > fim){
-msg.innerHTML=`<span style="color:#ef4444">⛔ Esta prova já terminou!<br>Término: ${new Date(p.fim).toLocaleString('pt-BR')}</span>`;
-area.innerHTML='';infoTent.innerHTML='';return;
-}
-
-// Verifica tentativas
-let todasResp=JSON.parse(localStorage.getItem('respostas_alunos')||'[]');
-let minhasRespostas=todasResp.filter(r=>r.atividadeId==p.id && r.alunoNome==cadastro.nome);
+let cadastro=JSON.parse(localStorage.getItem('aluno_cadastro_'+sessao.id)||'null');if(!cadastro||!cadastro.nome){msg.innerHTML='<span style="color:#ef4444">⚠️ Salve seu cadastro primeiro</span>';return;}
+let p=null;let docId=null;
+try{let q=fb.query(fb.collection(db,'provas'), fb.where('senha','==',codigo));let snap=await fb.getDocs(q);if(!snap.empty){snap.forEach(d=>{p=d.data();docId=d.id;});}}catch(e){}
+if(!p){let todas=JSON.parse(localStorage.getItem('provas_pc_final')||'[]');p=todas.find(x=>x.senha && x.senha.toLowerCase()==codigo.toLowerCase());if(p)docId=p.id;}
+if(!p){msg.innerHTML='<span style="color:#ef4444">❌ Código não encontrado na nuvem</span>';area.innerHTML='';infoTent.innerHTML='';return;}
+let agora=new Date();let inicio = p.inicio? new Date(p.inicio) : null;let fim = p.fim? new Date(p.fim) : null;
+if(inicio && agora < inicio){msg.innerHTML=`<span style="color:#f59e0b">⏰ Prova ainda não começou!<br>Início: ${new Date(p.inicio).toLocaleString('pt-BR')}</span>`;area.innerHTML='';return;}
+if(fim && agora > fim){msg.innerHTML=`<span style="color:#ef4444">⛔ Prova já terminou!<br>Término: ${new Date(p.fim).toLocaleString('pt-BR')}</span>`;area.innerHTML='';return;}
+let todasResp=[];try{let q2=fb.query(fb.collection(db,'resultados'), fb.where('atividadeId','==',docId), fb.where('alunoNome','==',cadastro.nome));let snap2=await fb.getDocs(q2);snap2.forEach(d=>todasResp.push(d.data()));}catch(e){todasResp=JSON.parse(localStorage.getItem('respostas_alunos')||'[]').filter(r=>r.atividadeId==p.id && r.alunoNome==cadastro.nome);}
 let maxTent=parseInt(p.maxTentativas||0);
-if(maxTent>0 && minhasRespostas.length>=maxTent){
-msg.innerHTML=`<span style="color:#ef4444">🚫 Você já atingiu o limite de ${maxTent} tentativa(s) para esta prova!<br>Você já enviou ${minhasRespostas.length} vez(es).</span>`;
-area.innerHTML='';infoTent.innerHTML='';return;
-}
-
-let tentativasRestantes = maxTent==0? 'ilimitadas' : (maxTent - minhasRespostas.length);
-infoTent.innerHTML=`Tentativas: ${minhasRespostas.length}/${maxTent==0?'∞ (sem limite)':maxTent} | Restantes: ${tentativasRestantes} | ${p.acaoSaida=='enviar_fechar'?'⚠️ Se sair da tela, envia e fecha!':'⚠️ Se sair da tela, só avisa'}`;
+if(maxTent>0 && todasResp.length>=maxTent){msg.innerHTML=`<span style="color:#ef4444">🚫 Limite de ${maxTent} tentativa(s) atingido! Você já enviou ${todasResp.length} vez(es).</span>`;area.innerHTML='';return;}
+let tentativasRestantes = maxTent==0? 'ilimitadas' : (maxTent - todasResp.length);
+infoTent.innerHTML=`Tentativas: ${todasResp.length}/${maxTent==0?'∞':maxTent} | Restantes: ${tentativasRestantes} | ${p.acaoSaida=='enviar_fechar'?'⚠️ Se sair, envia e fecha!':'⚠️ Só avisa'}`;
 msg.innerHTML='<span style="color:#22c55e">✅ Prova liberada! Boa prova!</span>';
-atividadeAtualAluno=p;
-provaBloqueada=false;
+atividadeAtualAluno={...p,_docId:docId};provaBloqueada=false;
 let logo=localStorage.getItem('logo_ee_alisson_base64')||"";
-let avisoSaida = p.acaoSaida=='enviar_fechar'? '<div style="background:#fef2f2;border:2px solid #ef4444;color:#991b1b;padding:8px;border-radius:8px;font-size:11px;font-weight:800;margin-bottom:10px;text-align:center">🚨 ATENÇÃO: Se você sair da tela, minimizar ou trocar de aba, sua prova será ENVIADA AUTOMATICAMENTE e FECHADA! Não saia!</div>' : '<div style="background:#fffbeb;border:2px solid #f59e0b;color:#92400e;padding:8px;border-radius:8px;font-size:11px;font-weight:800;margin-bottom:10px;text-align:center">⚠️ AVISO: Se você sair da tela, o professor será avisado. Permaneça na prova até enviar!</div>';
-
-area.innerHTML=`
-<div style="background:#fff;color:#000;padding:14px;border-radius:14px;margin-top:14px;border:2px solid #93c5fd">
-<div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid #1e3a8a;padding-bottom:8px;margin-bottom:10px">
-${logo?`<img src="${logo}" style="width:56px;height:56px;object-fit:contain">`:''}
-<div style="flex:1;text-align:center"><div style="font-weight:900;font-size:16px;color:#1e3a8a;text-transform:uppercase">${p.escola}</div><div style="font-weight:800;font-size:13px;text-transform:uppercase">${p.tituloAva} - ${p.nome}</div><div style="font-size:11px">Professor: ${p.professor} | Código: ${p.senha}</div><div style="font-size:10px;margin-top:2px">${p.inicio?`Início: ${new Date(p.inicio).toLocaleString('pt-BR')}`:''} ${p.fim?`| Fim: ${new Date(p.fim).toLocaleString('pt-BR')}`:''}</div></div>
-</div>
-<div style="border:1px solid #1e3a8a;padding:6px 10px;margin-bottom:12px;font-size:12px;background:#eff6ff">
-<b>Aluno:</b> ${cadastro.nome} | <b>Sala:</b> ${cadastro.sala} | <b>Ano:</b> ${cadastro.ano} | <b>Tentativa:</b> ${minhasRespostas.length+1}/${maxTent==0?'∞':maxTent}
-</div>
-${avisoSaida}
-${p.questoes.map((q,i)=>{
-let w=q.imgLarg||240;let h=q.imgAlt||70;
-return `<div style="margin-bottom:18px;padding:12px;border:2px dashed #93c5fd;border-radius:12px"><div style="font-weight:700;font-size:13px;margin-bottom:10px;color:#1e3a8a">${i+1}) ${q.pergunta}</div>${q.imagem?`<img src="${q.imagem}" style="width:${w}px;height:${h}px;max-width:100%;display:block;margin:6px 0 10px 0;border-radius:8px">`:''}${q.tipo=='multipla'?`
-<div style="display:flex;flex-direction:column;gap:6px">
-${['A','B','C','D'].map(letra=>`
-<div class="opcao-aluno" onclick="selecionarOpcao(this,'resp_${i}','${letra}')">
-<input type="radio" name="resp_${i}" value="${letra}" id="resp_${i}_${letra}">
-<label for="resp_${i}_${letra}"><b>${letra})</b> ${q[letra]}</label>
-</div>`).join('')}
-</div>`:`<div><textarea id="resp_${i}" placeholder="Digite sua resposta aqui..." style="width:100%;min-height:80px;border:1.5px solid #93c5fd;border-radius:8px;padding:8px;font-size:13px;color:#000;background:#fff"></textarea></div>`}</div>`;
-}).join('')}
-<button id="btnEnviarProva" class="btn-go" style="width:100%;padding:14px;font-size:14px;margin-top:10px" onclick="enviarRespostasAluno(false)">📤 ENVIAR RESPOSTAS PARA O PROFESSOR</button>
-<div id="envioOk" style="display:none;margin-top:10px;background:#dcfce7;color:#166534;padding:10px;border-radius:10px;font-weight:800;text-align:center"></div>
-</div>
-`;
-ativarMonitorSaida(p.acaoSaida);
+let avisoSaida = p.acaoSaida=='enviar_fechar'? '<div style="background:#fef2f2;border:2px solid #ef4444;color:#991b1b;padding:8px;border-radius:8px;font-size:11px;font-weight:800;margin-bottom:10px;text-align:center">🚨 Se sair da tela, sua prova será ENVIADA e FECHADA!</div>' : '<div style="background:#fffbeb;border:2px solid #f59e0b;color:#92400e;padding:8px;border-radius:8px;font-size:11px;font-weight:800;margin-bottom:10px;text-align:center">⚠️ Permaneça na prova até enviar!</div>';
+area.innerHTML=`<div style="background:#fff;color:#000;padding:14px;border-radius:14px;margin-top:14px;border:2px solid #93c5fd"><div style="display:flex;align-items:center;gap:12px;border-bottom:3px solid #1e3a8a;padding-bottom:8px;margin-bottom:10px">${logo?`<img src="${logo}" style="width:56px;height:56px;object-fit:contain">`:''}<div style="flex:1;text-align:center"><div style="font-weight:900;font-size:16px;color:#1e3a8a">${p.escola}</div><div style="font-weight:800;font-size:13px">${p.tituloAva} - ${p.nome}</div><div style="font-size:11px">Professor: ${p.professor} | Código: ${p.senha}</div></div></div><div style="border:1px solid #1e3a8a;padding:6px 10px;margin-bottom:12px;font-size:12px;background:#eff6ff"><b>Aluno:</b> ${cadastro.nome} | <b>Sala:</b> ${cadastro.sala} | <b>Tentativa:</b> ${todasResp.length+1}/${maxTent==0?'∞':maxTent}</div>${avisoSaida}${p.questoes.map((q,i)=>{let w=q.imgLarg||240;let h=q.imgAlt||70;return `<div style="margin-bottom:18px;padding:12px;border:2px dashed #93c5fd;border-radius:12px"><div style="font-weight:700;font-size:13px;margin-bottom:10px;color:#1e3a8a">${i+1}) ${q.pergunta}</div>${q.imagem?`<img src="${q.imagem}" style="width:${w}px;height:${h}px;max-width:100%;display:block;margin:6px 0 10px 0;border-radius:8px">`:''}${q.tipo=='multipla'?`<div style="display:flex;flex-direction:column;gap:6px">${['A','B','C','D'].map(letra=>`<div class="opcao-aluno" onclick="selecionarOpcao(this,'resp_${i}','${letra}')"><input type="radio" name="resp_${i}" value="${letra}" id="resp_${i}_${letra}"><label for="resp_${i}_${letra}"><b>${letra})</b> ${q[letra]}</label></div>`).join('')}</div>`:`<div><textarea id="resp_${i}" placeholder="Digite sua resposta..." style="width:100%;min-height:80px;border:1.5px solid #93c5fd;border-radius:8px;padding:8px;font-size:13px;color:#000;background:#fff"></textarea></div>`}</div>`;}).join('')}<button id="btnEnviarProva" class="btn-go" style="width:100%;padding:14px;font-size:14px;margin-top:10px" onclick="enviarRespostasAluno(false)">📤 ENVIAR PARA A NUVEM</button><div id="envioOk" style="display:none;margin-top:10px;background:#dcfce7;color:#166534;padding:10px;border-radius:10px;font-weight:800;text-align:center"></div></div>`;ativarMonitorSaida(p.acaoSaida);
 }
 function selecionarOpcao(div,name,letra){document.getElementById(`${name}_${letra}`).checked=true;div.parentElement.querySelectorAll('.opcao-aluno').forEach(d=>d.classList.remove('selecionada'));div.classList.add('selecionada');}
-function enviarRespostasAluno(isAuto=false){
+async function enviarRespostasAluno(isAuto=false){
 if(provaBloqueada) return;
 let cadastro=JSON.parse(localStorage.getItem('aluno_cadastro_'+sessao.id)||'null');
-if(!atividadeAtualAluno){alert('Busque uma atividade primeiro');return;}
+if(!atividadeAtualAluno){alert('Busque atividade');return;}
 let respostas=[];let faltando=false;
 atividadeAtualAluno.questoes.forEach((q,i)=>{
-if(q.tipo=='multipla'){
-let sel=document.querySelector(`input[name="resp_${i}"]:checked`);
-if(!sel) faltando=true;
-respostas.push({index:i,tipo:'multipla',resposta:sel?sel.value:'',gabarito:q.gab,correta:sel?sel.value==q.gab:false});
-}else{
-let txt=document.getElementById(`resp_${i}`)?.value.trim()||'';
-if(!txt) faltando=true;
-respostas.push({index:i,tipo:'dissertativa',resposta:txt,gabarito:''});
-}
+if(q.tipo=='multipla'){let sel=document.querySelector(`input[name="resp_${i}"]:checked`);if(!sel) faltando=true;respostas.push({index:i,tipo:'multipla',resposta:sel?sel.value:'',gabarito:q.gab,correta:sel?sel.value==q.gab:false});}else{let txt=document.getElementById(`resp_${i}`)?.value.trim()||'';if(!txt) faltando=true;respostas.push({index:i,tipo:'dissertativa',resposta:txt});}
 });
-if(!isAuto && faltando){if(!confirm('Tem questão sem resposta. Enviar mesmo assim?'))return;}
-
-let todasResp=JSON.parse(localStorage.getItem('respostas_alunos')||'[]');
+if(!isAuto && faltando){if(!confirm('Tem questão sem resposta. Enviar mesmo?'))return;}
 let acertos=respostas.filter(r=>r.tipo=='multipla' && r.correta).length;
 let totalMulti=atividadeAtualAluno.questoes.filter(q=>q.tipo=='multipla').length;
 let notaMulti=totalMulti>0?(acertos/totalMulti*10).toFixed(1):'--';
-let obj={id:'resp_'+Date.now(),atividadeId:atividadeAtualAluno.id,codigo:atividadeAtualAluno.senha,atividadeNome:atividadeAtualAluno.nome,professorId:atividadeAtualAluno.ownerId,professorNome:atividadeAtualAluno.professor,alunoNome:cadastro.nome,alunoSala:cadastro.sala,alunoAno:cadastro.ano,alunoId:sessao.id,timestamp:Date.now(),data:new Date().toLocaleString('pt-BR'),respostas,acertos,totalMulti,notaMulti,envioAutomatico:isAuto,acaoSaida:atividadeAtualAluno.acaoSaida};
-todasResp.push(obj);localStorage.setItem('respostas_alunos',JSON.stringify(todasResp));
-provaBloqueada=true;
-desativarMonitorSaida();
-let divOk=document.getElementById('envioOk');
-if(divOk){
-divOk.style.display='block';
-divOk.innerHTML=isAuto?`🚨 Prova enviada AUTOMATICAMENTE porque você saiu da tela!<br>Você acertou ${acertos} de ${totalMulti} | Nota: ${notaMulti}<br>Esta tentativa foi contabilizada.`:`✅ Respostas enviadas com sucesso!<br>Você acertou ${acertos} de ${totalMulti} questões de múltipla escolha.<br>Nota parcial: ${notaMulti}`;
+let obj={id:'resp_'+Date.now(),atividadeId:atividadeAtualAluno._docId||atividadeAtualAluno.id,codigo:atividadeAtualAluno.senha,atividadeNome:atividadeAtualAluno.nome,professorId:atividadeAtualAluno.ownerId,professorNome:atividadeAtualAluno.professor,alunoNome:cadastro.nome,alunoSala:cadastro.sala,alunoAno:cadastro.ano,alunoId:sessao.id,timestamp:Date.now(),data:new Date().toLocaleString('pt-BR'),respostas,acertos,totalMulti,notaMulti,envioAutomatico:isAuto,acaoSaida:atividadeAtualAluno.acaoSaida};
+try{await fb.setDoc(fb.doc(db,'resultados',obj.id),obj);document.getElementById('statusFirebase').innerText='✅ Resposta salva na nuvem Firebase';}catch(e){let todasResp=JSON.parse(localStorage.getItem('respostas_alunos')||'[]');todasResp.push(obj);localStorage.setItem('respostas_alunos',JSON.stringify(todasResp));}
+provaBloqueada=true;desativarMonitorSaida();
+let divOk=document.getElementById('envioOk');if(divOk){divOk.style.display='block';divOk.innerHTML=isAuto?`🚨 Prova enviada AUTOMATICAMENTE porque você saiu da tela!<br>Acertos ${acertos}/${totalMulti} | Nota ${notaMulti}`:`✅ Respostas enviadas para a nuvem!<br>Acertos ${acertos}/${totalMulti} | Nota ${notaMulti}`;}
+let btn=document.getElementById('btnEnviarProva');if(btn){btn.disabled=true;btn.innerText='✅ ENVIADA E FECHADA';btn.style.opacity='0.6';}
 }
-let btn=document.getElementById('btnEnviarProva');
-if(btn){btn.disabled=true;btn.innerText='✅ PROVA ENVIADA E FECHADA';btn.style.opacity='0.6';}
-if(isAuto){
-setTimeout(()=>{alert('Sua prova foi enviada automaticamente e fechada porque você saiu da tela!');},500);
-}
-window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
-}
-function verRespostas(atividadeId){
-let todasResp=JSON.parse(localStorage.getItem('respostas_alunos')||'[]');
-let todasProvas=JSON.parse(localStorage.getItem('provas_pc_final')||'[]');
-let prova=todasProvas.find(p=>p.id==atividadeId);
-let filtradas=todasResp.filter(r=>r.atividadeId==atividadeId);
-document.getElementById('tituloRespostas').innerText=`📊 RESPOSTAS - ${prova.nome} (${prova.senha}) - ${filtradas.length} envio(s)`;
-if(filtradas.length==0){document.getElementById('listaRespostas').innerHTML=`<div style="text-align:center;opacity:0.6;padding:20px">Nenhum aluno respondeu ainda.<br>Código: <b>${prova.senha}</b><br>Início: ${prova.inicio?new Date(prova.inicio).toLocaleString('pt-BR'):'Sem limite'}<br>Fim: ${prova.fim?new Date(prova.fim).toLocaleString('pt-BR'):'Sem limite'}<br>Tentativas: ${prova.maxTentativas==0?'∞':prova.maxTentativas} | Saída: ${prova.acaoSaida}</div>`;}else{
-document.getElementById('listaRespostas').innerHTML=filtradas.map((r)=>`
-<div class="resposta-item">
-<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px">
-<div><b>🎓 ${r.alunoNome}</b> ${r.envioAutomatico?'<span style="background:#ef4444;color:#fff;padding:2px 6px;border-radius:8px;font-size:10px">ENVIO AUTO - SAIU DA TELA</span>':''}<br><span style="font-size:11px">Sala: ${r.alunoSala} | Ano: ${r.alunoAno} | ${r.data}</span></div>
-<div style="background:${r.acertos==r.totalMulti?'#dcfce7':'#fef9c3'};color:${r.acertos==r.totalMulti?'#166534':'#854d0e'};padding:6px 12px;border-radius:20px;font-weight:900;font-size:12px">Acertos: ${r.acertos}/${r.totalMulti} | Nota: ${r.notaMulti}</div>
-</div>
-${r.respostas.map((resp,i)=>{let q=prova.questoes[resp.index];return `<div style="margin:8px 0;padding:8px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;color:#000;font-size:12px"><div style="font-weight:700">${i+1}) ${q.pergunta.substring(0,120)}</div>${resp.tipo=='multipla'?`<div>Resposta: <b style="color:${resp.correta?'#16a34a':'#dc2626'}">${resp.resposta||'--'}</b> | Gab: <b>${resp.gabarito}</b> ${resp.correta?'✅':'❌'}</div>`:`<div style="margin-top:4px;background:#f8fafc;padding:6px;border-radius:6px">Resposta: ${resp.resposta||'<i>vazio</i>'}</div>`}</div>`;}).join('')}
-<button class="btn-red" style="font-size:9px" onclick="apagarResposta('${r.id}')">🗑️ APAGAR</button>
-</div>`).join('');}
+async function verRespostas(atividadeId){
+let todasResp=[];let prova=null;
+try{let snap=await fb.getDocs(fb.query(fb.collection(db,'resultados'), fb.where('atividadeId','==',atividadeId)));snap.forEach(d=>todasResp.push(d.data()));let snapProva=await fb.getDoc(fb.doc(db,'provas',atividadeId));if(snapProva.exists()) prova=snapProva.data();}catch(e){todasResp=JSON.parse(localStorage.getItem('respostas_alunos')||'[]').filter(r=>r.atividadeId==atividadeId);let todasProvas=JSON.parse(localStorage.getItem('provas_pc_final')||'[]');prova=todasProvas.find(p=>p.id==atividadeId);}
+let filtradas=todasResp;
+document.getElementById('tituloRespostas').innerText=`📊 RESPOSTAS - ${prova?.nome||''} (${prova?.senha||''}) - ${filtradas.length} envio(s)`;
+if(filtradas.length==0){document.getElementById('listaRespostas').innerHTML=`<div style="text-align:center;opacity:0.6;padding:20px">Nenhum aluno respondeu ainda.<br>Código: <b>${prova?.senha}</b><br>Tentativas: ${prova?.maxTentativas==0?'∞':prova?.maxTentativas} | Saída: ${prova?.acaoSaida}</div>`;}else{
+document.getElementById('listaRespostas').innerHTML=filtradas.map((r)=>`<div class="resposta-item"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px"><div><b>🎓 ${r.alunoNome}</b> ${r.envioAutomatico?'<span style="background:#ef4444;color:#fff;padding:2px 6px;border-radius:8px;font-size:10px">ENVIO AUTO</span>':''}<br><span style="font-size:11px">Sala: ${r.alunoSala} | Ano: ${r.alunoAno} | ${r.data}</span></div><div style="background:${r.acertos==r.totalMulti?'#dcfce7':'#fef9c3'};padding:6px 12px;border-radius:20px;font-weight:900;font-size:12px">Acertos: ${r.acertos}/${r.totalMulti} | Nota: ${r.notaMulti}</div></div>${r.respostas.map((resp,i)=>{let q=prova?.questoes[resp.index];if(!q)return '';return `<div style="margin:8px 0;padding:8px;background:#fff;border-radius:8px;border:1px solid #e5e7eb;color:#000;font-size:12px"><div style="font-weight:700">${i+1}) ${q.pergunta.substring(0,120)}</div>${resp.tipo=='multipla'?`<div>Resposta: <b style="color:${resp.correta?'#16a34a':'#dc2626'}">${resp.resposta||'--'}</b> | Gab: <b>${resp.gabarito}</b> ${resp.correta?'✅':'❌'}</div>`:`<div style="margin-top:4px;background:#f8fafc;padding:6px;border-radius:6px">Resposta: ${resp.resposta||'<i>vazio</i>'}</div>`}</div>`;}).join('')}<button class="btn-red" style="font-size:9px" onclick="apagarRespostaFirebase('${r.id}')">🗑️ APAGAR DA NUVEM</button></div>`).join('');}
 document.getElementById('modalRespostas').style.display='flex';
 }
-function apagarResposta(id){if(!confirm('Apagar resposta?'))return;let todas=JSON.parse(localStorage.getItem('respostas_alunos')||'[]');todas=todas.filter(r=>r.id!=id);localStorage.setItem('respostas_alunos',JSON.stringify(todas));document.getElementById('modalRespostas').style.display='none';}
+async function apagarRespostaFirebase(id){if(!confirm('Apagar da nuvem?'))return;try{await fb.deleteDoc(fb.doc(db,'resultados',id));}catch(e){let todas=JSON.parse(localStorage.getItem('respostas_alunos')||'[]');todas=todas.filter(r=>r.id!=id);localStorage.setItem('respostas_alunos',JSON.stringify(todas));}document.getElementById('modalRespostas').style.display='none';}
+function apagarResposta(id){apagarRespostaFirebase(id);}
 let logoBase64=localStorage.getItem('logo_ee_alisson_base64')||"";const imgLogo=document.getElementById('img_logo');if(logoBase64){imgLogo.src=logoBase64;}
 function trocarLogo(input){let f=input.files[0]; if(!f) return;let r=new FileReader();r.onload=e=>{logoBase64=e.target.result;document.getElementById('img_logo').src=logoBase64;localStorage.setItem('logo_ee_alisson_base64',logoBase64);};r.readAsDataURL(f);}
 let editandoId=null;
@@ -265,7 +157,7 @@ function salvarQuestao(btn){let div=btn.closest('.q-editor');let texto=div.query
 function editarQuestao(btn){let div=btn.closest('.q-editor');div.querySelectorAll('input,textarea,select').forEach(e=>{e.disabled=false;});div.dataset.salva="false";div.classList.remove('salva');div.classList.add('pendente');let badge=div.querySelector('.q-header span:last-child');badge.innerText="⌛ PENDENTE";badge.className="badge-pendente";btn.style.display="none";div.querySelector('.btn-save').style.display="block";}
 function renumerar(){document.querySelectorAll('.q-editor').forEach((d,i)=>{d.querySelector('.badge-questao').innerText="QUESTÃO "+(i+1);});}
 function coletarSalvas(){let l=[];document.querySelectorAll('.q-editor[data-salva="true"]').forEach(div=>{l.push({tipo:div.dataset.tipo,pergunta:div.querySelector('.pergunta-input').value,imagem:div.querySelector('.imagem-base64').value,imgLarg:div.querySelector('.img-largura').value,imgAlt:div.querySelector('.img-altura').value,A:div.querySelector('.alt-A')?.value||"",B:div.querySelector('.alt-B')?.value||"",C:div.querySelector('.alt-C')?.value||"",D:div.querySelector('.alt-D')?.value||"",gab:div.querySelector('.gab-select')?.value||"A",linhas:div.querySelector('.linhas-select')?.value||"4"});});return l;}
-function finalizarSalvarPC(){
+async function finalizarSalvarPC(){
 let sessaoAtual=JSON.parse(localStorage.getItem('editor_sessao')||'null');
 let nome=document.getElementById('prov-titulo').value||"";let codigo=document.getElementById('prov-codigo').value||"";let escola=document.getElementById('nomeEscola').value;let titulo=document.getElementById('tituloAvaliacao').value;let professor=document.getElementById('nomeProfessor').value||"";let qs=coletarSalvas();
 let inicio=document.getElementById('prov-inicio').value;let fim=document.getElementById('prov-fim').value;
@@ -274,28 +166,47 @@ if(!qs.length){alert("⚠️ Salve 1 questão");return;}if(!codigo){alert('⚠�
 if(inicio && fim && new Date(inicio)>=new Date(fim)){alert('Data de início deve ser antes do término!');return;}
 let id=editandoId||"pc_"+Date.now();
 let obj={id,nome,senha:codigo,qtd:qs.length,questoes:qs,escola,tituloAva:titulo,professor,timestamp:Date.now(),ownerId:sessaoAtual.id,ownerNome:sessaoAtual.nome,inicio:inicio||'',fim:fim||'',maxTentativas:maxTent,acaoSaida};
+try{
+await fb.setDoc(fb.doc(db,'provas',id),obj);
+document.getElementById('statusFirebase').innerText='✅ Prova salva na nuvem: '+codigo;
+alert("✅ Salvo na nuvem Firebase! Código: "+codigo);
+}catch(e){
 let todas=JSON.parse(localStorage.getItem('provas_pc_final')||'[]');
 let idx=todas.findIndex(p=>p.id==id);
-if(idx>=0){if(todas[idx].ownerId!=sessaoAtual.id && sessaoAtual.tipo!='master'){alert('Não pode editar de outro!');return;}obj.ownerId=todas[idx].ownerId;obj.ownerNome=todas[idx].ownerNome;todas[idx]=obj;alert("✅ ATUALIZADO!");}else{todas.push(obj);alert("✅ Salvo! Código: "+codigo);}
-localStorage.setItem('provas_pc_final',JSON.stringify(todas));novaProva();carregarTudo();
+if(idx>=0){todas[idx]=obj;}else{todas.push(obj);}
+localStorage.setItem('provas_pc_final',JSON.stringify(todas));
+alert("✅ Salvo local (Firebase offline): "+codigo);
 }
-function carregarTudo(){
+novaProva();await carregarTudoFirebase();
+}
+async function carregarTudoFirebase(){
 let sessaoAtual=JSON.parse(localStorage.getItem('editor_sessao')||'null');
 if(!sessaoAtual)return;
-let todas=JSON.parse(localStorage.getItem('provas_pc_final')||'[]');
-let todasResp=JSON.parse(localStorage.getItem('respostas_alunos')||'[]');
+let todas=[];let todasResp=[];
+try{
+let snap=await fb.getDocs(fb.collection(db,'provas'));
+snap.forEach(d=>{let p=d.data();todas.push({...p,_docId:d.id});});
+let snapResp=await fb.getDocs(fb.collection(db,'resultados'));
+snapResp.forEach(d=>todasResp.push(d.data()));
+document.getElementById('statusFirebase').innerText=`✅ Firebase conectado: ${todas.length} provas, ${todasResp.length} respostas`;
+}catch(e){
+todas=JSON.parse(localStorage.getItem('provas_pc_final')||'[]');
+todasResp=JSON.parse(localStorage.getItem('respostas_alunos')||'[]');
+document.getElementById('statusFirebase').innerText='⚠️ Modo offline - usando localStorage';
+}
 let filtradas=[];if(sessaoAtual.tipo=='master'){filtradas=todas;}else{filtradas=todas.filter(p=>p.ownerId==sessaoAtual.id);}
 document.getElementById('listaProvas').innerHTML=filtradas.map(p=>{
-let qtdResp=todasResp.filter(r=>r.atividadeId==p.id).length;
+let qtdResp=todasResp.filter(r=>r.atividadeId==(p._docId||p.id)).length;
 let configInfo=`${p.inicio?`⏰ ${new Date(p.inicio).toLocaleString('pt-BR')}`:'⏰ Sem início'} até ${p.fim?new Date(p.fim).toLocaleString('pt-BR'):'Sem fim'} | 🔁 ${p.maxTentativas==0?'∞':p.maxTentativas}x | ${p.acaoSaida=='enviar_fechar'?'🚨 Envia e fecha':'⚠️ Só aviso'}`;
-return `<div style="background:var(--card);padding:14px;border-radius:14px;margin:10px 0;display:flex;justify-content:space-between;align-items:center;border:2px solid var(--border)"><div><div style="font-weight:900;color:var(--azul)">${p.nome||'Sem assunto'} - <span style="background:#facc15;color:#000;padding:2px 8px;border-radius:10px;font-size:11px">CÓDIGO: ${p.senha}</span> ${qtdResp>0?`<span style="background:#8b5cf6;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:4px">${qtdResp} RESP</span>`:''}</div><div style="font-size:10px;opacity:0.9;margin:4px 0;background:var(--input);padding:4px 6px;border-radius:6px">${configInfo}</div><div style="font-size:11px;opacity:0.8">${p.escola} | ${p.tituloAva} | 👨‍🏫 ${p.professor} | ${p.qtd} q</div></div><div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end"><button class="btn-resp" onclick="verRespostas('${p.id}')">📊 RESP (${qtdResp})</button><button class="btn-copy" onclick="duplicarProva('${p.id}')">📑 COPIAR</button><button class="btn-edit-prova" onclick="editarProvaCompleta('${p.id}')">✏️</button><button class="btn-print" onclick="imprimirProva('${p.id}',false)">🖨️ 1 COL</button><button class="btn-2col" onclick="imprimirProva('${p.id}',true)">🖨️ 2 COL</button><button class="btn-red" onclick="apagarProva('${p.id}')">🗑️</button></div></div>`}).join('')||'<div style="text-align:center;opacity:0.6;font-size:12px;margin-top:10px">Nenhuma atividade</div>';
+return `<div style="background:var(--card);padding:14px;border-radius:14px;margin:10px 0;display:flex;justify-content:space-between;align-items:center;border:2px solid var(--border)"><div><div style="font-weight:900;color:var(--azul)">${p.nome||'Sem assunto'} - <span style="background:#facc15;color:#000;padding:2px 8px;border-radius:10px;font-size:11px">CÓDIGO: ${p.senha}</span> ${qtdResp>0?`<span style="background:#8b5cf6;color:#fff;padding:2px 8px;border-radius:10px;font-size:11px;margin-left:4px">${qtdResp} RESP</span>`:''}</div><div style="font-size:10px;opacity:0.9;margin:4px 0;background:var(--input);padding:4px 6px;border-radius:6px">${configInfo}</div><div style="font-size:11px;opacity:0.8">${p.escola} | ${p.tituloAva} | 👨‍🏫 ${p.professor} | ${p.qtd} q</div></div><div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end"><button class="btn-resp" onclick="verRespostas('${p._docId||p.id}')">📊 RESP (${qtdResp})</button><button class="btn-copy" onclick="duplicarProva('${p._docId||p.id}')">📑 COPIAR</button><button class="btn-edit-prova" onclick="editarProvaCompleta('${p._docId||p.id}')">✏️</button><button class="btn-print" onclick="imprimirProva('${p._docId||p.id}',false)">🖨️ 1 COL</button><button class="btn-2col" onclick="imprimirProva('${p._docId||p.id}',true)">🖨️ 2 COL</button><button class="btn-red" onclick="apagarProvaFirebase('${p._docId||p.id}')">🗑️</button></div></div>`}).join('')||'<div style="text-align:center;opacity:0.6;font-size:12px;margin-top:10px">Nenhuma atividade na nuvem</div>';
 }
-function duplicarProva(id){let sessaoAtual=JSON.parse(localStorage.getItem('editor_sessao')||'null');let todas=JSON.parse(localStorage.getItem('provas_pc_final')||'[]');let original=todas.find(x=>x.id==id);if(sessaoAtual.tipo!='master' && original.ownerId!=sessaoAtual.id){alert('Não pode copiar de outro!');return;}if(!confirm(`Duplicar?`))return;let copia=JSON.parse(JSON.stringify(original));copia.id="pc_"+Date.now();copia.nome="Cópia - "+(original.nome||"Prova");copia.ownerId=sessaoAtual.id;copia.ownerNome=sessaoAtual.nome;copia.timestamp=Date.now();todas.push(copia);localStorage.setItem('provas_pc_final',JSON.stringify(todas));carregarTudo();}
-function editarProvaCompleta(id){let sessaoAtual=JSON.parse(localStorage.getItem('editor_sessao')||'null');let todas=JSON.parse(localStorage.getItem('provas_pc_final')||'[]');let p=todas.find(x=>x.id==id);if(sessaoAtual.tipo!='master' && p.ownerId!=sessaoAtual.id){alert('Não pode editar de outro!');return;}editandoId=id;document.getElementById('nomeEscola').value=p.escola;document.getElementById('tituloAvaliacao').value=p.tituloAva;document.getElementById('nomeProfessor').value=p.professor||"";document.getElementById('prov-titulo').value=p.nome;document.getElementById('prov-codigo').value=p.senha;document.getElementById('prov-inicio').value=p.inicio||'';document.getElementById('prov-fim').value=p.fim||'';document.getElementById('prov-tentativas').value=p.maxTentativas||'0';document.getElementById('prov-saida').value=p.acaoSaida||'aviso';document.getElementById('avisoEditando').style.display='block';document.getElementById('btnFinalizar').innerText='💾 ATUALIZAR';document.getElementById('editorQuestoes').innerHTML='';p.questoes.forEach(q=>addQuestao(q));window.scrollTo({top:0,behavior:'smooth'});}
-function apagarProva(id){let sessaoAtual=JSON.parse(localStorage.getItem('editor_sessao')||'null');let todas=JSON.parse(localStorage.getItem('provas_pc_final')||'[]');let p=todas.find(x=>x.id==id);if(sessaoAtual.tipo!='master' && p.ownerId!=sessaoAtual.id){alert('Não pode apagar de outro!');return;}if(!confirm("Apagar?"))return;todas=todas.filter(p=>p.id!=id);localStorage.setItem('provas_pc_final',JSON.stringify(todas));carregarTudo();}
-function novaProva(){editandoId=null;document.getElementById('avisoEditando').style.display='none';document.getElementById('btnFinalizar').innerText='💾 SALVAR';document.getElementById('prov-inicio').value='';document.getElementById('prov-fim').value='';document.getElementById('prov-tentativas').value='0';document.getElementById('prov-saida').value='aviso';document.getElementById('editorQuestoes').innerHTML='';addQuestao();}
+async function duplicarProva(id){let snap=await fb.getDoc(fb.doc(db,'provas',id));if(!snap.exists()){alert('Prova não encontrada');return;}let original=snap.data();let copia={...original,id:"pc_"+Date.now(),nome:"Cópia - "+(original.nome||"Prova"),timestamp:Date.now()};await fb.setDoc(fb.doc(db,'provas',copia.id),copia);carregarTudoFirebase();}
+async function editarProvaCompleta(id){let snap=await fb.getDoc(fb.doc(db,'provas',id));if(!snap.exists()){let todas=JSON.parse(localStorage.getItem('provas_pc_final')||'[]');let p=todas.find(x=>x.id==id);if(!p)return;editandoId=id;document.getElementById('nomeEscola').value=p.escola;document.getElementById('tituloAvaliacao').value=p.tituloAva;document.getElementById('nomeProfessor').value=p.professor||"";document.getElementById('prov-titulo').value=p.nome;document.getElementById('prov-codigo').value=p.senha;document.getElementById('prov-inicio').value=p.inicio||'';document.getElementById('prov-fim').value=p.fim||'';document.getElementById('prov-tentativas').value=p.maxTentativas||'0';document.getElementById('prov-saida').value=p.acaoSaida||'aviso';document.getElementById('avisoEditando').style.display='block';document.getElementById('btnFinalizar').innerText='💾 ATUALIZAR';document.getElementById('editorQuestoes').innerHTML='';p.questoes.forEach(q=>addQuestao(q));return;}let p=snap.data();editandoId=id;document.getElementById('nomeEscola').value=p.escola;document.getElementById('tituloAvaliacao').value=p.tituloAva;document.getElementById('nomeProfessor').value=p.professor||"";document.getElementById('prov-titulo').value=p.nome;document.getElementById('prov-codigo').value=p.senha;document.getElementById('prov-inicio').value=p.inicio||'';document.getElementById('prov-fim').value=p.fim||'';document.getElementById('prov-tentativas').value=p.maxTentativas||'0';document.getElementById('prov-saida').value=p.acaoSaida||'aviso';document.getElementById('avisoEditando').style.display='block';document.getElementById('btnFinalizar').innerText='💾 ATUALIZAR NUVEM';document.getElementById('editorQuestoes').innerHTML='';p.questoes.forEach(q=>addQuestao(q));window.scrollTo({top:0,behavior:'smooth'});}
+async function apagarProvaFirebase(id){if(!confirm("Apagar da nuvem?"))return;await fb.deleteDoc(fb.doc(db,'provas',id));carregarTudoFirebase();}
+function apagarProva(id){apagarProvaFirebase(id);}
+function novaProva(){editandoId=null;document.getElementById('avisoEditando').style.display='none';document.getElementById('btnFinalizar').innerText='💾 SALVAR NA NUVEM';document.getElementById('prov-inicio').value='';document.getElementById('prov-fim').value='';document.getElementById('prov-tentativas').value='0';document.getElementById('prov-saida').value='aviso';document.getElementById('editorQuestoes').innerHTML='';addQuestao();}
 function gerarHTMLImpressao(p,d2){let escola=p.escola; let titulo=p.tituloAva; let professor=p.professor||""; let logo=logoBase64||document.getElementById('img_logo').src;return `<div style="font-family:Arial;color:#000;background:#fff;padding:8px 14px;max-width:800px;margin:auto"><div style="display:flex;align-items:flex-start;gap:14px;border-bottom:4px solid #1e3a8a;padding-bottom:6px;margin-bottom:8px"><img src="${logo}" style="width:68px;height:68px;object-fit:contain"><div style="flex:1;text-align:center;line-height:1.2"><div style="font-weight:900;font-size:18px;text-transform:uppercase;color:#1e3a8a">${escola}</div><div style="font-weight:800;font-size:14px;border-top:2.5px solid #1e3a8a;display:inline-block;padding-top:2px;margin-top:3px;text-transform:uppercase">${titulo}</div>${professor?`<div style="font-weight:700;font-size:12px;margin-top:3px">Professor: ${professor}</div>`:''}</div></div><div style="border:1.8px solid #1e3a8a;padding:6px 10px;margin-bottom:10px;font-size:11.5px;display:flex;justify-content:space-between;gap:10px"><span style="flex:2">Nome: ___________________________________________________</span><span>Data: ____/____/____</span><span>Nota: ______</span></div><div style="${d2?'column-count:2;column-gap:32px;column-rule:1px solid #93c5fd':''}">${p.questoes.map((q,i)=>{let w=q.imgLarg||240;let h=q.imgAlt||70;let estilo=`width:${w}px;height:${h}px;max-width:100%;object-fit:contain`;return `<div style="break-inside:avoid;margin-bottom:12px"><div style="font-weight:700;font-size:11.5px">${i+1}) ${q.pergunta}</div>${q.imagem?`<img src="${q.imagem}" style="${estilo};display:block;margin:2px 0 2px 20px">`:''}${q.tipo=='multipla'?`<div style="margin:1px 0 0 2px;font-size:10.5px"><div>○ A) ${q.A}</div><div>○ B) ${q.B}</div><div>○ C) ${q.C}</div><div>○ D) ${q.D}</div></div>`:`<div style="margin:1px 0 0 0">${Array(parseInt(q.linhas)).fill(0).map(()=>`<div style="border-bottom:1.2px solid #93c5fd;height:20px"></div>`).join('')}</div>`}</div>`}).join('')}</div></div>`;}
-function imprimirProva(id,d2){let todas=JSON.parse(localStorage.getItem('provas_pc_final')||'[]');let p=todas.find(x=>x.id==id);let h=gerarHTMLImpressao(p,d2);let w=window.open('','_blank');w.document.write(`<html><head><style>@page{margin:7mm 8mm} body{margin:0}</style></head><body>${h}</body></html>`);w.document.close();w.onload=()=>{w.print();};}
+async function imprimirProva(id,d2){let snap=await fb.getDoc(fb.doc(db,'provas',id));let p=snap.exists()?snap.data():JSON.parse(localStorage.getItem('provas_pc_final')||'[]').find(x=>x.id==id);let h=gerarHTMLImpressao(p,d2);let w=window.open('','_blank');w.document.write(`<html><head><style>@page{margin:7mm 8mm} body{margin:0}</style></head><body>${h}</body></html>`);w.document.close();w.onload=()=>{w.print();};}
 function imprimirRascunho(d2){let qs=coletarSalvas();if(!qs.length){alert("Salve");return;}let p={nome:document.getElementById('prov-titulo').value||"",senha:document.getElementById('prov-codigo').value||"",qtd:qs.length,questoes:qs,escola:document.getElementById('nomeEscola').value,tituloAva:document.getElementById('tituloAvaliacao').value,professor:document.getElementById('nomeProfessor').value};let h=gerarHTMLImpressao(p,d2);let w=window.open('','_blank');w.document.write(`<html><head><style>@page{margin:7mm 8mm} body{margin:0}</style></head><body>${h}</body></html>`);w.document.close();w.onload=()=>{w.print();};}
 verificarSessao();addQuestao();
 </script></body></html>
